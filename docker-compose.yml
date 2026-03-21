@@ -1,0 +1,60 @@
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: movivo
+      DOCKER_INFLUXDB_INIT_PASSWORD: movivo12345!!
+      DOCKER_INFLUXDB_INIT_ORG: movivo
+      DOCKER_INFLUXDB_INIT_BUCKET: movivo
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: movivo
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  firebase:
+    build: ./firebase
+    ports:
+      - "4002:4000"   # Emulator UI (Changed to 4002 to avoid conflict with backend on 4001)
+      - "5001:5001"   # Functions
+      - "8080:8080"   # Firestore
+      - "9000:9000"   # Realtime Database
+      - "9099:9099"   # Auth
+      - "9199:9199"   # Storage
+    volumes:
+      - ./firebase-data:/app/firebase-data  # Persist emulator data
+      - ./firebase/firebase.json:/app/firebase.json # Mount config
+    environment:
+      - FIREBASE_TOKEN=${FIREBASE_TOKEN}    # For CI/CD auth
+    stdin_open: true
+    tty: true
+
+
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "4000:4000"
+    environment:
+      INFLUX_URL: http://influxdb:8086        # container name = hostname http://192.168.1.50:8086 LAN IP
+      INFLUX_TOKEN: movivo
+      INFLUX_ORG: movivo
+      INFLUX_BUCKET: movivo
+    depends_on:
+      - influxdb
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  influxdb_data:
