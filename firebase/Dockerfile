@@ -16,4 +16,4 @@ COPY . .
 EXPOSE 4000 5001 8080 9000 9099 9199
 
 # Start Firebase emulators
-CMD ["firebase", "emulators:start", "--only", "firestore,auth,functions", "--project", "demo-project"]
+CMD ["firebase", "emulators:start", "--only", "firestore,auth,functions", "--project", "demo-project", "--import", "/app/firebase-data/export", "--export-on-exit", "/app/firebase-data/export"]
