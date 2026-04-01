@@ -37,6 +37,10 @@ export default function App() {
     return <PhysioDashboard onLogout={handleLogout} />;
   }
 
+  if (user && role === "patient") {
+    return <PatientDashboard onLogout={handleLogout} />;
+  }
+
   // Landing Page + Login Overlay
   return (
     <section className="min-h-screen flex relative overflow-hidden">
