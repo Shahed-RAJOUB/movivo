@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import LoginOverlay from "./components/shared/LoginOverlay";
 import PhysioDashboard from "./pages/PhysioDashboard";
+import PatientDashboard from "./pages/PatientDashboard";
 
 export default function App() {
   const [showLogin, setShowLogin] = useState(false);

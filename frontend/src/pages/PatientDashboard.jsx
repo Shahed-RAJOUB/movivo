@@ -1,7 +1,7 @@
 import { useState } from "react";
-import PatientSidebar from "../shared/PatientSidebar";
-import PlaceholderPage from "../shared/PlaceholderPage";
-import PatientHomePage from "./PatientHomePage";
+import PatientSidebar from "../components/shared/PatientSidebar";
+import PlaceholderPage from "../components/shared/PlaceholderPage";
+import PatientHomePage from "../components/patient/PatientHomePage";
 
 export default function PatientDashboard({ onLogout, userName }) {
   const [activePage, setActivePage] = useState("home");
