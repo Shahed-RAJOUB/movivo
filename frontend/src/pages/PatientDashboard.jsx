@@ -7,6 +7,7 @@ export default function PatientDashboard({ onLogout, userName }) {
   const [activePage, setActivePage] = useState("home");
 
   const PAGES = {
+    home:      { title: "Mein Bereich",    cardTitle: "Willkommen zurück", message: "Hier findest du deinen persönlichen Bereich, um deinen Therapie-Fortschritt zu verfolgen, deinen Trainingsplan einzusehen und auf hilfreiche Tutorials zuzugreifen." },
     training:  { title: "Trainingsplan",   cardTitle: "Mein Plan",       message: "Dein Trainingsplan wird hier angezeigt — coming soon." },
     progress:  { title: "Fortschritt",     cardTitle: "Mein Fortschritt", message: "Detaillierter Therapie-Fortschritt — coming soon." },
     tutorials: { title: "Tutorials",       cardTitle: "Video-Bibliothek", message: "Tutorials und Übungsanleitungen — coming soon." },
