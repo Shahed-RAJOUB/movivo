@@ -5,6 +5,7 @@ import { doc, getDoc } from "firebase/firestore";
 import LoginOverlay from "./components/shared/LoginOverlay";
 import PhysioDashboard from "./pages/PhysioDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
+import { theme } from "./theme/theme";
 
 export default function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -49,7 +50,7 @@ export default function App() {
     await signOut(auth);
     setUser(null);
     setRole(null);
-  }
+  };
 
   if (authLoading) return null;
 
@@ -61,48 +62,89 @@ export default function App() {
     return <PatientDashboard onLogout={handleLogout} />;
   }
 
-  // Landing Page + Login Overlay
   return (
-    <section className="min-h-screen flex relative overflow-hidden">
+    <section
+      className="min-h-screen flex relative overflow-hidden"
+      style={{ fontFamily: theme.font.body }}
+    >
       
-      <div className={`bg-[#ff5a5a] text-white transition-all duration-700 ${showLogin ? "w-[90%]" : "w-1/2"} min-h-screen flex items-center`}>
+      {/* ─── LEFT SIDE ─── */}
+      <div
+        className={`text-white transition-all duration-700 ${
+          showLogin ? "w-[90%]" : "w-1/2"
+        } min-h-screen flex items-center`}
+        style={{ background: theme.colors.primary }}
+      >
         <div className="ml-16 max-w-xl">
           
-          <>
-            <p className="uppercase tracking-widest mb-6 text-sm">MOTIONINVIVO.</p>
-            <h1 className="text-6xl font-bold leading-tight">Screening.<br/>Rehabilitation.</h1>
-            
-            <div className="mt-10 flex items-center gap-4">
-              <div className="w-2 h-12 bg-orange-300" />
-              <p className="text-sm">FREE YOUR MIND</p>
-            </div>
+          {/* Brand */}
+          <p
+            className="uppercase tracking-widest mb-6 text-sm"
+            style={{
+              fontFamily: theme.font.brand,
+              fontWeight: 700,
+            }}
+          >
+            MOTIONINVIVO.
+          </p>
 
-            {!showLogin && (
-              <button 
-                onClick={() => setShowLogin(true)} 
-                className="mt-10 border border-white px-6 py-3"
-              >
-                LOGIN
-              </button>
-            )}
+          {/* Headline */}
+          <h1
+            className="text-6xl font-bold leading-tight"
+            style={{ fontFamily: theme.font.heading }}
+          >
+            Screening.<br />Rehabilitation.
+          </h1>
 
-            <div className="mt-16 grid grid-cols-12 gap-2 max-w-xs opacity-60">
-              {Array.from({ length: 60 }).map((_, i) => (
-                <div key={i} className="w-1 h-1 bg-white" />
-              ))}
-            </div>
-          </>
-          
+          {/* Sub */}
+          <div className="mt-10 flex items-center gap-4">
+            <div
+              className="w-2 h-12"
+              style={{ background: "#FFD86E" }}
+            />
+            <p className="text-sm">FREE YOUR MIND</p>
+          </div>
+
+          {/* Button */}
+          {!showLogin && (
+            <button
+              onClick={() => setShowLogin(true)}
+              className="mt-10 px-6 py-3 border transition-all hover:bg-white hover:text-black"
+            >
+              LOGIN
+            </button>
+          )}
+
+          {/* Pattern */}
+          <div className="mt-16 grid grid-cols-12 gap-2 max-w-xs opacity-60">
+            {Array.from({ length: 60 }).map((_, i) => (
+              <div key={i} className="w-1 h-1 bg-white" />
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className={`bg-gray-100 transition-all duration-700 ${showLogin ? "w-[10%]" : "w-1/2"} min-h-screen flex items-center justify-center`}>
+      {/* ─── RIGHT SIDE ─── */}
+      <div
+        className={`transition-all duration-700 ${
+          showLogin ? "w-[10%]" : "w-1/2"
+        } min-h-screen flex items-center justify-center`}
+        style={{ background: "#f5f3f1" }}
+      >
         {!showLogin && (
-          <h2 className="text-5xl font-bold text-[#ff5a5a]">SAY HELLO.</h2>
+          <h2
+            className="text-5xl font-bold"
+            style={{
+              color: theme.colors.primary,
+              fontFamily: theme.font.heading,
+            }}
+          >
+            SAY HELLO.
+          </h2>
         )}
       </div>
 
-
+      {/* ─── LOGIN OVERLAY ─── */}
       {showLogin && (
         <LoginOverlay
           email={email}
@@ -114,7 +156,11 @@ export default function App() {
         />
       )}
 
-      <div className="absolute bottom-0 right-0 bg-pink-400 text-white px-10 py-4 text-sm z-20">
+      {/* ─── FOOTER TAG ─── */}
+      <div
+        className="absolute bottom-0 right-0 text-white px-10 py-4 text-sm z-20"
+        style={{ background: theme.colors.primary }}
+      >
         PHYSIOTHERAPY SCREENING AND REPORT
       </div>
     </section>
