@@ -1,4 +1,5 @@
 import { theme } from "../../theme/theme";
+import { useAuth } from "../../context/AuthContext";
 import QuickActionCard from "../ui/QuickActionCard";
 
 export default function PhysioHomePage({ userName, onNavigate, onStartScreening }) {
@@ -9,6 +10,7 @@ export default function PhysioHomePage({ userName, onNavigate, onStartScreening 
       : today.getHours() < 18
       ? "Guten Tag"
       : "Guten Abend";
+  const { userData } = useAuth();
 
   return (
     <div className="p-6" style={{ fontFamily: theme.font.body }}>
@@ -22,7 +24,7 @@ export default function PhysioHomePage({ userName, onNavigate, onStartScreening 
             fontFamily: theme.font.heading,
           }}
         >
-          {greeting}, {userName || "Therapeut:in"}
+          {greeting}, {userData?.name || "Therapeut:in"}
         </h1>
 
         <p
