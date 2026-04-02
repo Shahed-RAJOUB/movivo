@@ -15,7 +15,9 @@ export default function PhysioSidebar({ activePage, setActivePage, onLogout }) {
       style={{ background: "linear-gradient(180deg, #E8594F 0%, #e07060 100%)" }}
     >
       <div className="px-7 mb-12">
-        <h1 className="text-white text-lg font-bold tracking-[1.5px]">MOTIONINVIVO.</h1>
+        <h1 className="text-white text-lg tracking-[1.5px] brand-font">
+          MOTIONINVIVO.
+        </h1>
       </div>
 
       <nav className="flex-1">

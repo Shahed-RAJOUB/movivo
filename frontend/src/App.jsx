@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { auth, db } from "./firebase";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import LoginOverlay from "./components/shared/LoginOverlay";
 import PhysioDashboard from "./pages/PhysioDashboard";
@@ -12,6 +12,23 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const snap = await getDoc(doc(db, "users", firebaseUser.uid));
+        const fetchedRole = snap.exists() ? snap.data().role : null;
+        setUser(firebaseUser);
+        setRole(fetchedRole);
+      } else {
+        setUser(null);
+        setRole(null);
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -33,6 +50,8 @@ export default function App() {
     setUser(null);
     setRole(null);
   }
+
+  if (authLoading) return null;
 
   if (user && role === "physio") {
     return <PhysioDashboard onLogout={handleLogout} />;
