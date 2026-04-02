@@ -1,11 +1,4 @@
-import { useState, useEffect } from "react";
-import { auth, db } from "./firebase";
-import {
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-} from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { useState } from "react";
 import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 
 import LoginOverlay from "./components/shared/LoginOverlay";
@@ -13,34 +6,21 @@ import PhysioDashboard from "./pages/PhysioDashboard";
 import PatientDashboard from "./pages/PatientDashboard";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "./firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+import { useAuth } from "./context/AuthContext";
 import { theme } from "./theme/theme";
 
 export default function App() {
   const navigate = useNavigate();
 
+  const { user, role, loading, logout } = useAuth();
+
   const [showLogin, setShowLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  // ─── AUTH STATE ───
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const snap = await getDoc(doc(db, "users", firebaseUser.uid));
-        const fetchedRole = snap.exists() ? snap.data().role : null;
-        setUser(firebaseUser);
-        setRole(fetchedRole);
-      } else {
-        setUser(null);
-        setRole(null);
-      }
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
   // ─── LOGIN ───
   const handleLogin = async (e) => {
@@ -56,11 +36,9 @@ export default function App() {
       const snap = await getDoc(doc(db, "users", uid));
       const fetchedRole = snap.exists() ? snap.data().role : null;
 
-      setUser(userCredential.user);
-      setRole(fetchedRole);
       setShowLogin(false);
 
-      // 👉 redirect nach login
+      // Redirect
       if (fetchedRole === "physio") navigate("/home");
       if (fetchedRole === "patient") navigate("/patient");
     } catch (error) {
@@ -68,20 +46,12 @@ export default function App() {
     }
   };
 
-  // ─── LOGOUT ───
-  const handleLogout = async () => {
-    await signOut(auth);
-    setUser(null);
-    setRole(null);
-    navigate("/");
-  };
-
-  if (authLoading) return null;
+  if (loading) return null;
 
   return (
     <Routes>
 
-      {/* ─── LANDING PAGE ─── */}
+      {/* ─── LANDING ─── */}
       <Route
         path="/"
         element={
@@ -182,22 +152,22 @@ export default function App() {
         }
       />
 
-      {/* ─── PHYSIO PROTECTED ─── */}
+      {/* ─── PHYSIO ─── */}
       <Route
         path="/*"
         element={
           <ProtectedRoute user={user} role={role} allowedRole="physio">
-            <PhysioDashboard onLogout={handleLogout} />
+            <PhysioDashboard onLogout={logout} />
           </ProtectedRoute>
         }
       />
 
-      {/* ─── PATIENT PROTECTED ─── */}
+      {/* ─── PATIENT ─── */}
       <Route
         path="/patient/*"
         element={
           <ProtectedRoute user={user} role={role} allowedRole="patient">
-            <PatientDashboard onLogout={handleLogout} />
+            <PatientDashboard onLogout={logout} />
           </ProtectedRoute>
         }
       />
