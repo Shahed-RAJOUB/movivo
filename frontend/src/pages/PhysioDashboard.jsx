@@ -3,6 +3,7 @@ import PhysioHomePage from "../components/physio/PhysioHomePage";
 import Topbar from "../components/layout/Topbar"
 import PatientsPage from "./PatientsPage";
 import NewPatientPage from "./NewPatientPage";
+import PatientDetailPage from "./PatientDetailPage";
 
 import {
   Routes,
@@ -50,6 +51,7 @@ export default function PhysioDashboard({ onLogout }) {
             {/* Patients */}
             <Route path="/patients" element={<PatientsPage />} />
             <Route path="/new-patient" element={<NewPatientPage />} />
+            <Route path="/patients/:id" element={<PatientDetailPage />} />
 
             {/* Screenings */}
             <Route path="/screenings" element={<div>Screenings Seite</div>} />
