@@ -1,6 +1,7 @@
 import { theme } from "../../theme/theme";
 import { useAuth } from "../../context/AuthContext";
 import QuickActionCard from "../ui/QuickActionCard";
+import NewPatientPage from "../../pages/NewPatientPage";
 
 export default function PhysioHomePage({ userName, onNavigate, onStartScreening }) {
   const today = new Date();
@@ -53,7 +54,7 @@ export default function PhysioHomePage({ userName, onNavigate, onStartScreening 
           description="Patient:in anlegen & speichern"
           icon="+"
           gradient={theme.colors.primaryGradient}
-          onClick={() => onNavigate?.("new-patient")}
+          onClick={() => onNavigate?.("/new-patient")}
         />
 
         <QuickActionCard
@@ -69,7 +70,7 @@ export default function PhysioHomePage({ userName, onNavigate, onStartScreening 
           description="Übersicht & Verlauf"
           icon="≡"
           gradient={theme.colors.infoGradient}
-          onClick={() => onNavigate?.("patients")}
+          onClick={() => onNavigate?.("/patients")}
         />
 
       </div>

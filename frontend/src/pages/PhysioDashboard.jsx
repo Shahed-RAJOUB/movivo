@@ -1,5 +1,9 @@
 import PhysioSidebar from "../components/shared/PhysioSidebar";
 import PhysioHomePage from "../components/physio/PhysioHomePage";
+import Topbar from "../components/layout/Topbar"
+import PatientsPage from "./PatientsPage";
+import NewPatientPage from "./NewPatientPage";
+
 import {
   Routes,
   Route,
@@ -12,46 +16,54 @@ export default function PhysioDashboard({ onLogout }) {
 
   return (
     <div className="flex min-h-screen">
-      
+
       {/* ─── SIDEBAR ─── */}
       <PhysioSidebar
         onNavigate={navigate}
         onLogout={onLogout}
       />
 
-      {/* ─── MAIN CONTENT ─── */}
-      <main className="flex-1 bg-gray-50 p-10">
-        <Routes>
+      {/* ─── RIGHT SIDE ─── */}
+      <div className="flex-1 flex flex-col">
 
-          {/* Default Redirect */}
-          <Route path="/" element={<Navigate to="/home" />} />
+        {/* ─── TOPBAR ─── */}
+        <Topbar />
 
-          {/* Home */}
-          <Route
-            path="/home"
-            element={
-              <PhysioHomePage
-                userName="Lukas"
-                onNavigate={navigate}
-                onStartScreening={() => navigate("/screenings")}
-              />
-            }
-          />
+        {/* ─── MAIN CONTENT ─── */}
+        <main className="flex-1 bg-gray-50 p-10">
+          <Routes>
 
-          {/* Patients */}
-          <Route path="/patients" element={<div>Patienten Seite</div>} />
+            {/* Default Redirect */}
+            <Route path="/" element={<Navigate to="/home" />} />
 
-          {/* Screenings */}
-          <Route path="/screenings" element={<div>Screenings Seite</div>} />
+            {/* Home */}
+            <Route
+              path="/home"
+              element={
+                <PhysioHomePage
+                  onNavigate={navigate}
+                  onStartScreening={() => navigate("/screenings")}
+                />
+              }
+            />
 
-          {/* Future Routes */}
-          <Route path="/training" element={<div>Training Seite</div>} />
-          <Route path="/treatments" element={<div>Treatments Seite</div>} />
-          <Route path="/reports" element={<div>Reports Seite</div>} />
-          <Route path="/settings" element={<div>Settings Seite</div>} />
+            {/* Patients */}
+            <Route path="/patients" element={<PatientsPage />} />
+            <Route path="/new-patient" element={<NewPatientPage />} />
 
-        </Routes>
-      </main>
+            {/* Screenings */}
+            <Route path="/screenings" element={<div>Screenings Seite</div>} />
+
+            {/* Future Routes */}
+            <Route path="/training" element={<div>Training Seite</div>} />
+            <Route path="/treatments" element={<div>Treatments Seite</div>} />
+            <Route path="/reports" element={<div>Reports Seite</div>} />
+            <Route path="/settings" element={<div>Settings Seite</div>} />
+
+          </Routes>
+        </main>
+
+      </div>
     </div>
   );
 }
