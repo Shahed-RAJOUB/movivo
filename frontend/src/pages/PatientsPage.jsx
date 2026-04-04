@@ -42,19 +42,16 @@ export default function PatientsPage() {
 
   return (
     <div>
-      <h2
-        className="text-xl font-bold mb-6"
-        style={{ color: theme.colors.textPrimary }}
-      >
-        Patienten
+      <h2 className="p-2" style={{ fontFamily: theme.font.body, color: theme.colors.textPrimary}}>
+        PATIENT OVERVIEW
       </h2>
 
-      <div className="grid gap-4">
+      <div className="grid gap-2">
         {patients.map((p) => (
           <div
             key={p.id}
-            onClick={() => navigate(`/patients/${p.id}`)} // 🔥 NAVIGATION
-            className="p-4 rounded-2xl cursor-pointer transition hover:shadow-lg"
+            onClick={() => navigate(`/patients/${p.id}`)} // NAVIGATION
+            className="p-2 rounded-2xl cursor-pointer transition hover:shadow-lg"
             style={{
               background: theme.colors.background,
               boxShadow: theme.shadow.card,

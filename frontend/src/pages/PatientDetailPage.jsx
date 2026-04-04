@@ -10,16 +10,16 @@ export default function PatientDetailPage() {
 
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingField, setEditingField] = useState(null);
 
-  // editable fields
+  // editable state
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("");
 
-  // 🔥 Fetch
+  // ─── FETCH ───
   useEffect(() => {
     const fetchPatient = async () => {
       const snap = await getDoc(doc(db, "patients", id));
@@ -40,7 +40,7 @@ export default function PatientDetailPage() {
     fetchPatient();
   }, [id]);
 
-  // 🔥 Save
+  // ─── SAVE ───
   const handleSave = async () => {
     setSaving(true);
 
@@ -52,27 +52,39 @@ export default function PatientDetailPage() {
       gender,
     });
 
-    const updated = {
+    setPatient({
       ...patient,
       firstName: name,
       surname,
       birthDate,
       gender,
       name: `${surname} ${name}`,
-    };
+    });
 
-    setPatient(updated);
-    setEditMode(false);
     setSaving(false);
   };
 
-  // 🔥 Cancel
-  const handleCancel = () => {
-    setName(patient.firstName);
-    setSurname(patient.surname);
-    setBirthDate(patient.birthDate);
-    setGender(patient.gender);
-    setEditMode(false);
+  // ─── INLINE COMPONENT ───
+  const InlineEdit = ({ value, onChange, field, type = "text" }) => {
+    const isEditing = editingField === field;
+
+    return isEditing ? (
+      <input
+        type={type}
+        value={value}
+        autoFocus
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => setEditingField(null)}
+        className="ml-2 border-b outline-none"
+      />
+    ) : (
+      <span
+        onClick={() => setEditingField(field)}
+        className="ml-2 cursor-pointer hover:bg-gray-100 px-1 rounded transition"
+      >
+        {value || "—"}
+      </span>
+    );
   };
 
   if (loading) return <div>Lade Patient...</div>;
@@ -97,7 +109,7 @@ export default function PatientDetailPage() {
           fontFamily: theme.font.heading,
         }}
       >
-        {patient.name}
+        {surname} {name}
       </h1>
 
       {/* CARD */}
@@ -112,62 +124,58 @@ export default function PatientDetailPage() {
 
           {/* Vorname */}
           <div>
-            <span className="text-gray-500">Vorname:</span>{" "}
-            {editMode ? (
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="border-b outline-none ml-2"
-              />
-            ) : (
-              patient.firstName
-            )}
+            <span className="text-gray-500">Vorname:</span>
+            <InlineEdit
+              field="firstName"
+              value={name}
+              onChange={setName}
+            />
           </div>
 
           {/* Nachname */}
           <div>
-            <span className="text-gray-500">Nachname:</span>{" "}
-            {editMode ? (
-              <input
-                value={surname}
-                onChange={(e) => setSurname(e.target.value)}
-                className="border-b outline-none ml-2"
-              />
-            ) : (
-              patient.surname
-            )}
+            <span className="text-gray-500">Nachname:</span>
+            <InlineEdit
+              field="surname"
+              value={surname}
+              onChange={setSurname}
+            />
           </div>
 
           {/* Birthdate */}
           <div>
-            <span className="text-gray-500">Geburtsdatum:</span>{" "}
-            {editMode ? (
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="border-b outline-none ml-2"
-              />
-            ) : (
-              patient.birthDate
-            )}
+            <span className="text-gray-500">Geburtsdatum:</span>
+            <InlineEdit
+              field="birthDate"
+              value={birthDate}
+              onChange={setBirthDate}
+              type="date"
+            />
           </div>
 
           {/* Gender */}
           <div>
-            <span className="text-gray-500">Geschlecht:</span>{" "}
-            {editMode ? (
+            <span className="text-gray-500">Geschlecht:</span>
+
+            {editingField === "gender" ? (
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className="border-b outline-none ml-2"
+                onBlur={() => setEditingField(null)}
+                autoFocus
+                className="ml-2 border-b outline-none"
               >
                 <option value="male">Männlich</option>
                 <option value="female">Weiblich</option>
                 <option value="other">Divers</option>
               </select>
             ) : (
-              patient.gender
+              <span
+                onClick={() => setEditingField("gender")}
+                className="ml-2 cursor-pointer hover:bg-gray-100 px-1 rounded"
+              >
+                {gender || "—"}
+              </span>
             )}
           </div>
 
@@ -179,35 +187,16 @@ export default function PatientDetailPage() {
 
         </div>
 
-        {/* ACTIONS */}
-        <div className="mt-6 flex gap-3">
-          {editMode ? (
-            <>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 rounded text-white"
-                style={{ background: theme.colors.primary }}
-              >
-                {saving ? "Speichern..." : "Speichern"}
-              </button>
-
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 rounded border"
-              >
-                Abbrechen
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setEditMode(true)}
-              className="px-4 py-2 rounded text-white"
-              style={{ background: theme.colors.primary }}
-            >
-              Bearbeiten
-            </button>
-          )}
+        {/* SAVE */}
+        <div className="mt-6">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded text-white"
+            style={{ background: theme.colors.primary }}
+          >
+            {saving ? "Speichern..." : "Änderungen speichern"}
+          </button>
         </div>
       </div>
     </div>
