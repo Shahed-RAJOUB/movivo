@@ -13,7 +13,6 @@ export default function PatientDetailPage() {
   const [saving, setSaving] = useState(false);
   const [editingField, setEditingField] = useState(null);
 
-  // editable state
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -40,31 +39,34 @@ export default function PatientDetailPage() {
     fetchPatient();
   }, [id]);
 
-  // ─── SAVE ───
-  const handleSave = async () => {
+  // ─── AUTO SAVE ───
+  const saveField = async (field, value) => {
     setSaving(true);
 
+    const updatedData = {
+      firstName: field === "firstName" ? value : name,
+      surname: field === "surname" ? value : surname,
+      birthDate: field === "birthDate" ? value : birthDate,
+      gender: field === "gender" ? value : gender,
+    };
+
+    const fullName = `${updatedData.surname} ${updatedData.firstName}`;
+
     await updateDoc(doc(db, "patients", id), {
-      firstName: name,
-      surname,
-      name: `${surname} ${name}`,
-      birthDate,
-      gender,
+      ...updatedData,
+      name: fullName,
     });
 
     setPatient({
       ...patient,
-      firstName: name,
-      surname,
-      birthDate,
-      gender,
-      name: `${surname} ${name}`,
+      ...updatedData,
+      name: fullName,
     });
 
     setSaving(false);
   };
 
-  // ─── INLINE COMPONENT ───
+  // ─── INLINE EDIT ───
   const InlineEdit = ({ value, onChange, field, type = "text" }) => {
     const isEditing = editingField === field;
 
@@ -74,13 +76,16 @@ export default function PatientDetailPage() {
         value={value}
         autoFocus
         onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setEditingField(null)}
+        onBlur={(e) => {
+          saveField(field, e.target.value); // 🔥 auto save
+          setEditingField(null);
+        }}
         className="ml-2 border-b outline-none"
       />
     ) : (
       <span
         onClick={() => setEditingField(field)}
-        className="ml-2 cursor-pointer hover:bg-gray-100 px-1 rounded transition"
+        className="ml-2 cursor-pointer hover:bg-gray-100 px-1 rounded"
       >
         {value || "—"}
       </span>
@@ -122,7 +127,6 @@ export default function PatientDetailPage() {
       >
         <div className="grid gap-4 text-sm">
 
-          {/* Vorname */}
           <div>
             <span className="text-gray-500">Vorname:</span>
             <InlineEdit
@@ -132,7 +136,6 @@ export default function PatientDetailPage() {
             />
           </div>
 
-          {/* Nachname */}
           <div>
             <span className="text-gray-500">Nachname:</span>
             <InlineEdit
@@ -142,7 +145,6 @@ export default function PatientDetailPage() {
             />
           </div>
 
-          {/* Birthdate */}
           <div>
             <span className="text-gray-500">Geburtsdatum:</span>
             <InlineEdit
@@ -153,16 +155,18 @@ export default function PatientDetailPage() {
             />
           </div>
 
-          {/* Gender */}
           <div>
             <span className="text-gray-500">Geschlecht:</span>
 
             {editingField === "gender" ? (
               <select
                 value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                onBlur={() => setEditingField(null)}
                 autoFocus
+                onChange={(e) => setGender(e.target.value)}
+                onBlur={(e) => {
+                  saveField("gender", e.target.value);
+                  setEditingField(null);
+                }}
                 className="ml-2 border-b outline-none"
               >
                 <option value="male">Männlich</option>
@@ -179,7 +183,6 @@ export default function PatientDetailPage() {
             )}
           </div>
 
-          {/* Created By */}
           <div>
             <span className="text-gray-500">Erstellt von:</span>{" "}
             {patient.createdByName}
@@ -187,17 +190,12 @@ export default function PatientDetailPage() {
 
         </div>
 
-        {/* SAVE */}
-        <div className="mt-6">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 rounded text-white"
-            style={{ background: theme.colors.primary }}
-          >
-            {saving ? "Speichern..." : "Änderungen speichern"}
-          </button>
-        </div>
+        {/* SAVE STATUS */}
+        {saving && (
+          <div className="mt-4 text-sm text-gray-500">
+            Speichert...
+          </div>
+        )}
       </div>
     </div>
   );
