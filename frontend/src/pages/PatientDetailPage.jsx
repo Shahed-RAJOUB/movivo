@@ -10,13 +10,18 @@ export default function PatientDetailPage() {
 
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [editingField, setEditingField] = useState(null);
 
+  // editable fields
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("");
+
+  // UX states
+  const [saveTimeout, setSaveTimeout] = useState(null);
+  const [status, setStatus] = useState(""); // saving | saved
+  const [lastSavedData, setLastSavedData] = useState(null);
 
   // ─── FETCH ───
   useEffect(() => {
@@ -39,31 +44,76 @@ export default function PatientDetailPage() {
     fetchPatient();
   }, [id]);
 
-  // ─── AUTO SAVE ───
-  const saveField = async (field, value) => {
-    setSaving(true);
+  // ─── DEBOUNCED SAVE ───
+  const debouncedSave = (field, value) => {
+    if (saveTimeout) clearTimeout(saveTimeout);
 
-    const updatedData = {
-      firstName: field === "firstName" ? value : name,
-      surname: field === "surname" ? value : surname,
-      birthDate: field === "birthDate" ? value : birthDate,
-      gender: field === "gender" ? value : gender,
-    };
+    const timeout = setTimeout(async () => {
+      setStatus("saving");
 
-    const fullName = `${updatedData.surname} ${updatedData.firstName}`;
+      const updatedData = {
+        firstName: field === "firstName" ? value : name,
+        surname: field === "surname" ? value : surname,
+        birthDate: field === "birthDate" ? value : birthDate,
+        gender: field === "gender" ? value : gender,
+      };
+
+      const fullName = `${updatedData.surname} ${updatedData.firstName}`;
+
+      // backup for undo
+      setLastSavedData({
+        firstName: patient.firstName,
+        surname: patient.surname,
+        birthDate: patient.birthDate,
+        gender: patient.gender,
+      });
+
+      await updateDoc(doc(db, "patients", id), {
+        ...updatedData,
+        name: fullName,
+      });
+
+      const updatedPatient = {
+        ...patient,
+        ...updatedData,
+        name: fullName,
+      };
+
+      setPatient(updatedPatient);
+
+      setStatus("saved");
+
+      setTimeout(() => setStatus(""), 2000);
+    }, 500);
+
+    setSaveTimeout(timeout);
+  };
+
+  // ─── UNDO ───
+  const handleUndo = async () => {
+    if (!lastSavedData) return;
+
+    setStatus("saving");
+
+    const fullName = `${lastSavedData.surname} ${lastSavedData.firstName}`;
 
     await updateDoc(doc(db, "patients", id), {
-      ...updatedData,
+      ...lastSavedData,
       name: fullName,
     });
 
     setPatient({
       ...patient,
-      ...updatedData,
+      ...lastSavedData,
       name: fullName,
     });
 
-    setSaving(false);
+    setName(lastSavedData.firstName);
+    setSurname(lastSavedData.surname);
+    setBirthDate(lastSavedData.birthDate);
+    setGender(lastSavedData.gender);
+
+    setStatus("saved");
   };
 
   // ─── INLINE EDIT ───
@@ -75,11 +125,11 @@ export default function PatientDetailPage() {
         type={type}
         value={value}
         autoFocus
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={(e) => {
-          saveField(field, e.target.value); // 🔥 auto save
-          setEditingField(null);
+        onChange={(e) => {
+          onChange(e.target.value);
+          debouncedSave(field, e.target.value);
         }}
+        onBlur={() => setEditingField(null)}
         className="ml-2 border-b outline-none"
       />
     ) : (
@@ -129,20 +179,12 @@ export default function PatientDetailPage() {
 
           <div>
             <span className="text-gray-500">Vorname:</span>
-            <InlineEdit
-              field="firstName"
-              value={name}
-              onChange={setName}
-            />
+            <InlineEdit field="firstName" value={name} onChange={setName} />
           </div>
 
           <div>
             <span className="text-gray-500">Nachname:</span>
-            <InlineEdit
-              field="surname"
-              value={surname}
-              onChange={setSurname}
-            />
+            <InlineEdit field="surname" value={surname} onChange={setSurname} />
           </div>
 
           <div>
@@ -162,11 +204,11 @@ export default function PatientDetailPage() {
               <select
                 value={gender}
                 autoFocus
-                onChange={(e) => setGender(e.target.value)}
-                onBlur={(e) => {
-                  saveField("gender", e.target.value);
-                  setEditingField(null);
+                onChange={(e) => {
+                  setGender(e.target.value);
+                  debouncedSave("gender", e.target.value);
                 }}
+                onBlur={() => setEditingField(null)}
                 className="ml-2 border-b outline-none"
               >
                 <option value="male">Männlich</option>
@@ -190,12 +232,20 @@ export default function PatientDetailPage() {
 
         </div>
 
-        {/* SAVE STATUS */}
-        {saving && (
-          <div className="mt-4 text-sm text-gray-500">
-            Speichert...
-          </div>
-        )}
+        {/* STATUS */}
+        <div className="mt-4 text-sm text-gray-500 flex items-center gap-3">
+          {status === "saving" && <span>Speichert...</span>}
+          {status === "saved" && <span>Gespeichert ✓</span>}
+
+          {status === "saved" && (
+            <button
+              onClick={handleUndo}
+              className="underline text-xs"
+            >
+              Rückgängig
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
