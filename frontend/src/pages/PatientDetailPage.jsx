@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { theme } from "../theme/theme";
 
 export default function PatientDetailPage() {
@@ -20,8 +20,12 @@ export default function PatientDetailPage() {
 
   // UX states
   const [saveTimeout, setSaveTimeout] = useState(null);
-  const [status, setStatus] = useState(""); // saving | saved
+  const [status, setStatus] = useState("");
   const [lastSavedData, setLastSavedData] = useState(null);
+
+  // delete modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // ─── FETCH ───
   useEffect(() => {
@@ -44,7 +48,7 @@ export default function PatientDetailPage() {
     fetchPatient();
   }, [id]);
 
-  // ─── DEBOUNCED SAVE ───
+  // ─── DEBOUNCE SAVE ───
   const debouncedSave = (field, value) => {
     if (saveTimeout) clearTimeout(saveTimeout);
 
@@ -73,16 +77,13 @@ export default function PatientDetailPage() {
         name: fullName,
       });
 
-      const updatedPatient = {
+      setPatient({
         ...patient,
         ...updatedData,
         name: fullName,
-      };
-
-      setPatient(updatedPatient);
+      });
 
       setStatus("saved");
-
       setTimeout(() => setStatus(""), 2000);
     }, 500);
 
@@ -114,6 +115,13 @@ export default function PatientDetailPage() {
     setGender(lastSavedData.gender);
 
     setStatus("saved");
+  };
+
+  // ─── DELETE ───
+  const handleDelete = async () => {
+    setDeleting(true);
+    await deleteDoc(doc(db, "patients", id));
+    navigate("/patients");
   };
 
   // ─── INLINE EDIT ───
@@ -238,15 +246,67 @@ export default function PatientDetailPage() {
           {status === "saved" && <span>Gespeichert ✓</span>}
 
           {status === "saved" && (
-            <button
-              onClick={handleUndo}
-              className="underline text-xs"
-            >
+            <button onClick={handleUndo} className="underline text-xs">
               Rückgängig
             </button>
           )}
         </div>
+
+        {/* DELETE BUTTON */}
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="mt-6 text-sm text-red-500 hover:underline"
+        >
+          Patient löschen
+        </button>
       </div>
+
+      {/* DELETE MODAL */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+
+          {/* BACKDROP */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteModal(false)}
+          />
+
+          {/* MODAL */}
+          <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl z-10">
+
+            <h3 className="text-lg font-semibold text-red-600 mb-2">
+              Patient löschen?
+            </h3>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Möchtest du den Patienten{" "}
+              <span className="font-semibold">{patient.name}</span> wirklich löschen?
+            </p>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 mb-6">
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-sm rounded border"
+              >
+                Abbrechen
+              </button>
+
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 text-sm rounded text-white"
+                style={{ background: deleting ? "#999" : "#e53935" }}
+              >
+                {deleting ? "Lösche..." : "Endgültig löschen"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
