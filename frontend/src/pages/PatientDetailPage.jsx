@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { theme } from "../theme/theme";
+import Card from "../components/shared/Card";
 
 export default function PatientDetailPage() {
   const { id } = useParams();
@@ -12,18 +13,15 @@ export default function PatientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editingField, setEditingField] = useState(null);
 
-  // editable fields
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState("");
 
-  // UX states
   const [saveTimeout, setSaveTimeout] = useState(null);
   const [status, setStatus] = useState("");
   const [lastSavedData, setLastSavedData] = useState(null);
 
-  // delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -48,7 +46,24 @@ export default function PatientDetailPage() {
     fetchPatient();
   }, [id]);
 
-  // ─── DEBOUNCE SAVE ───
+  // ─── AGE ───
+  const calculateAge = (birthDate) => {
+    if (!birthDate) return "-";
+
+    const today = new Date();
+    const birth = new Date(birthDate);
+
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+
+    return age;
+  };
+
+  const initials = `${name?.[0] || ""}${surname?.[0] || ""}`.toUpperCase();
+
+  // ─── SAVE ───
   const debouncedSave = (field, value) => {
     if (saveTimeout) clearTimeout(saveTimeout);
 
@@ -64,7 +79,6 @@ export default function PatientDetailPage() {
 
       const fullName = `${updatedData.surname} ${updatedData.firstName}`;
 
-      // backup for undo
       setLastSavedData({
         firstName: patient.firstName,
         surname: patient.surname,
@@ -77,11 +91,7 @@ export default function PatientDetailPage() {
         name: fullName,
       });
 
-      setPatient({
-        ...patient,
-        ...updatedData,
-        name: fullName,
-      });
+      setPatient({ ...patient, ...updatedData, name: fullName });
 
       setStatus("saved");
       setTimeout(() => setStatus(""), 2000);
@@ -90,11 +100,8 @@ export default function PatientDetailPage() {
     setSaveTimeout(timeout);
   };
 
-  // ─── UNDO ───
   const handleUndo = async () => {
     if (!lastSavedData) return;
-
-    setStatus("saving");
 
     const fullName = `${lastSavedData.surname} ${lastSavedData.firstName}`;
 
@@ -103,28 +110,21 @@ export default function PatientDetailPage() {
       name: fullName,
     });
 
-    setPatient({
-      ...patient,
-      ...lastSavedData,
-      name: fullName,
-    });
+    setPatient({ ...patient, ...lastSavedData, name: fullName });
 
     setName(lastSavedData.firstName);
     setSurname(lastSavedData.surname);
     setBirthDate(lastSavedData.birthDate);
     setGender(lastSavedData.gender);
-
-    setStatus("saved");
   };
 
-  // ─── DELETE ───
   const handleDelete = async () => {
     setDeleting(true);
     await deleteDoc(doc(db, "patients", id));
     navigate("/patients");
   };
 
-  // ─── INLINE EDIT ───
+  // ─── INLINE EDIT CLEAN ───
   const InlineEdit = ({ value, onChange, field, type = "text" }) => {
     const isEditing = editingField === field;
 
@@ -138,14 +138,14 @@ export default function PatientDetailPage() {
           debouncedSave(field, e.target.value);
         }}
         onBlur={() => setEditingField(null)}
-        className="ml-2 border-b outline-none"
+        className="w-full px-1 border-b border-[#e8e0da] bg-transparent outline-none text-[#3d3129] focus:border-[#E8594F]"
       />
     ) : (
       <span
         onClick={() => setEditingField(field)}
-        className="ml-2 cursor-pointer hover:bg-gray-100 px-1 rounded"
+        className="block w-full px-1 py-1 cursor-pointer rounded hover:bg-[#faf5f0]"
       >
-        {value || "—"}
+        {value || <span className="text-[#a09488] italic">Nicht gesetzt</span>}
       </span>
     );
   };
@@ -154,159 +154,256 @@ export default function PatientDetailPage() {
   if (!patient) return <div>Patient nicht gefunden</div>;
 
   return (
-    <div className="max-w-3xl">
 
-      {/* BACK */}
-      <button
-        onClick={() => navigate("/patients")}
-        className="mb-4 text-sm text-gray-500 underline"
-      >
-        ← Zurück
-      </button>
+  <div className="flex flex-col">
 
-      {/* HEADER */}
-      <h1
-        className="text-2xl font-bold mb-6"
-        style={{
-          color: theme.colors.textPrimary,
-          fontFamily: theme.font.heading,
-        }}
-      >
-        {surname} {name}
-      </h1>
+    {/* ─── HEADER ─── */}
+    <div className="px-10 pt-4 pb-2 bg-white border-b border-[#f0e8e0]">
 
-      {/* CARD */}
-      <div
-        className="p-6 rounded-2xl"
-        style={{
-          background: theme.colors.background,
-          boxShadow: theme.shadow.card,
-        }}
-      >
-        <div className="grid gap-4 text-sm">
+      <div className="flex items-center justify-between pb-3">
 
+        <div className="flex items-center gap-4">
+
+          {/* Avatar */}
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm"
+            style={{ background: theme.colors.primaryGradient }}
+          >
+            {initials}
+          </div>
+
+          {/* Name + Meta */}
           <div>
-            <span className="text-gray-500">Vorname:</span>
+            <div className="text-[20px] font-semibold tracking-tight text-[#3d3129]">
+              {name} {surname}
+            </div>
+
+            <div className="text-[13px] text-[#b0a49a]">
+              {calculateAge(birthDate)} Jahre
+              {gender && ` • ${
+                gender === "male"
+                  ? "Männlich"
+                  : gender === "female"
+                  ? "Weiblich"
+                  : "Divers"
+              }`}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Delete */}
+        <button
+          onClick={handleDelete}
+          className="text-[13px] text-red-500 hover:underline"
+        >
+          Löschen
+        </button>
+
+      </div>
+
+      {/* ─── NAVIGATION ─── */}
+      <div className="flex gap-6 text-[13px] mt-2">
+
+        <div className="relative pb-3 font-medium text-[#3d3129]">
+          Übersicht
+          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#E8594F]" />
+        </div>
+
+        <div className="pb-3 text-[#b0a49a] hover:text-[#3d3129] cursor-pointer">
+          Verlauf
+        </div>
+
+      </div>
+
+    </div>
+
+    {/* ─── CONTENT ─── */}
+    <div className="px-10 py-8">
+
+      <div className="grid grid-cols-[1fr_360px] gap-10">
+
+        {/* ─── LEFT: STAMMDATEN ─── */}
+        <Card title="Stammdaten">
+
+          <div className="text-xs text-[#b0a49a] mb-4 uppercase tracking-wide">
+            Basisdaten
+          </div>
+
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+
+            <div className="text-[#b0a49a]">Vorname</div>
             <InlineEdit field="firstName" value={name} onChange={setName} />
-          </div>
 
-          <div>
-            <span className="text-gray-500">Nachname:</span>
+            <div className="text-[#b0a49a]">Nachname</div>
             <InlineEdit field="surname" value={surname} onChange={setSurname} />
-          </div>
 
-          <div>
-            <span className="text-gray-500">Geburtsdatum:</span>
+            <div className="text-[#b0a49a]">Geburtsdatum</div>
             <InlineEdit
               field="birthDate"
               value={birthDate}
               onChange={setBirthDate}
               type="date"
             />
+
+            <div className="text-[#b0a49a]">Alter</div>
+            <div className="text-[#3d3129]">
+              {calculateAge(birthDate)} Jahre
+            </div>
+
+            <div className="text-[#b0a49a]">Geschlecht</div>
+            <InlineEdit
+              field="gender"
+              value={
+                gender === "male"
+                  ? "Männlich"
+                  : gender === "female"
+                  ? "Weiblich"
+                  : gender === "other"
+                  ? "Divers"
+                  : ""
+              }
+              onChange={(val) => {
+                const map = {
+                  "Männlich": "male",
+                  "Weiblich": "female",
+                  "Divers": "other",
+                };
+                setGender(map[val] || val);
+              }}
+            />
+
           </div>
 
-          <div>
-            <span className="text-gray-500">Geschlecht:</span>
+          <div className="border-t border-[#f0e8e0] my-6" />
 
-            {editingField === "gender" ? (
-              <select
-                value={gender}
-                autoFocus
-                onChange={(e) => {
-                  setGender(e.target.value);
-                  debouncedSave("gender", e.target.value);
+          <div className="text-xs text-[#b0a49a] mb-4 uppercase tracking-wide">
+            System
+          </div>
+
+          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+
+            <div className="text-[#b0a49a]">Therapeut</div>
+            <div className="text-[#3d3129]">
+              {patient.createdByName || "-"}
+            </div>
+
+            <div className="text-[#b0a49a]">Erstellt am</div>
+            <div className="text-[#3d3129]">
+              {patient.createdAt?.toDate
+                ? patient.createdAt.toDate().toLocaleDateString()
+                : "-"}
+            </div>
+
+          </div>
+
+        </Card>
+
+        {/* ─── RIGHT: MOCK DASHBOARD ─── */}
+        <div className="flex flex-col gap-6">
+
+          {/* SCORE */}
+          <Card title="Aktueller Status">
+
+            <div className="text-3xl font-bold text-[#3d3129]">
+              16 / 21
+            </div>
+
+            <div className="text-sm text-[#b0a49a] mt-1">
+              letzter FMS Score
+            </div>
+
+            <div className="mt-4 h-2 bg-[#f5f0ea] rounded-full overflow-hidden">
+              <div
+                className="h-full"
+                style={{
+                  width: "76%",
+                  background: theme.colors.primaryGradient,
                 }}
-                onBlur={() => setEditingField(null)}
-                className="ml-2 border-b outline-none"
-              >
-                <option value="male">Männlich</option>
-                <option value="female">Weiblich</option>
-                <option value="other">Divers</option>
-              </select>
-            ) : (
-              <span
-                onClick={() => setEditingField("gender")}
-                className="ml-2 cursor-pointer hover:bg-gray-100 px-1 rounded"
-              >
-                {gender || "—"}
-              </span>
-            )}
-          </div>
+              />
+            </div>
 
-          <div>
-            <span className="text-gray-500">Erstellt von:</span>{" "}
-            {patient.createdByName}
-          </div>
+            <div className="text-xs text-green-500 mt-2">
+              +2 Verbesserung
+            </div>
+
+          </Card>
+
+          {/* SESSIONS */}
+          <Card title="Behandlung">
+
+            <div className="flex justify-between items-center">
+
+              <div>
+                <div className="text-2xl font-bold text-[#3d3129]">
+                  12
+                </div>
+                <div className="text-sm text-[#b0a49a]">
+                  Sessions gesamt
+                </div>
+              </div>
+
+              <div className="text-right">
+                <div className="text-sm font-medium text-[#3d3129]">
+                  2 / Woche
+                </div>
+                <div className="text-xs text-[#b0a49a]">
+                  Frequenz
+                </div>
+              </div>
+
+            </div>
+
+          </Card>
+
+          {/* NEXT SESSION */}
+          <Card title="Nächster Termin">
+
+            <div className="text-lg font-semibold text-[#3d3129]">
+              12. April 2026
+            </div>
+
+            <div className="text-sm text-[#b0a49a] mt-1">
+              09:30 Uhr • Praxis
+            </div>
+
+            <div className="mt-3 text-xs text-[#b0a49a]">
+              geplant vor 3 Tagen
+            </div>
+
+          </Card>
+
+          {/* SCREENINGS */}
+          <Card title="Letzte Screenings">
+
+            <div className="flex flex-col gap-3 text-sm">
+
+              <div className="flex justify-between">
+                <span>20.03.2026</span>
+                <span className="font-medium">16 / 21</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>12.03.2026</span>
+                <span className="font-medium">14 / 21</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>01.03.2026</span>
+                <span className="font-medium">13 / 21</span>
+              </div>
+
+            </div>
+
+          </Card>
 
         </div>
 
-        {/* STATUS */}
-        <div className="mt-4 text-sm text-gray-500 flex items-center gap-3">
-          {status === "saving" && <span>Speichert...</span>}
-          {status === "saved" && <span>Gespeichert ✓</span>}
-
-          {status === "saved" && (
-            <button onClick={handleUndo} className="underline text-xs">
-              Rückgängig
-            </button>
-          )}
-        </div>
-
-        {/* DELETE BUTTON */}
-        <button
-          onClick={() => setShowDeleteModal(true)}
-          className="mt-6 text-sm text-red-500 hover:underline"
-        >
-          Patient löschen
-        </button>
       </div>
 
-      {/* DELETE MODAL */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-
-          {/* BACKDROP */}
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowDeleteModal(false)}
-          />
-
-          {/* MODAL */}
-          <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl z-10">
-
-            <h3 className="text-lg font-semibold text-red-600 mb-2">
-              Patient löschen?
-            </h3>
-
-            <p className="text-sm text-gray-600 mb-4">
-              Möchtest du den Patienten{" "}
-              <span className="font-semibold">{patient.name}</span> wirklich löschen?
-            </p>
-
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 mb-6">
-              Diese Aktion kann nicht rückgängig gemacht werden.
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-sm rounded border"
-              >
-                Abbrechen
-              </button>
-
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="px-4 py-2 text-sm rounded text-white"
-                style={{ background: deleting ? "#999" : "#e53935" }}
-              >
-                {deleting ? "Lösche..." : "Endgültig löschen"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+
+  </div>
+
   );
 }

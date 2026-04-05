@@ -42,7 +42,7 @@ export default function PatientsPage() {
   };
 
   return (
-    <div>
+    <div className="px-10 py-8">
 
       <Card title="Patients" subtitle="Overview">
         <table className="w-full text-sm">

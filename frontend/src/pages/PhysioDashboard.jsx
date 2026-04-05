@@ -32,7 +32,7 @@ export default function PhysioDashboard({ onLogout }) {
         <Topbar />
 
         {/* ─── MAIN CONTENT ─── */}
-        <main className="flex-1 bg-gray-50 p-10">
+        <main className="flex-1 bg-gray-50">
           <Routes>
 
             {/* Default Redirect */}
