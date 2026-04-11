@@ -158,7 +158,7 @@ export default function PatientDetailPage() {
   <div className="flex flex-col">
 
     {/* ─── HEADER ─── */}
-    <div className="px-10 pt-4 pb-2 bg-white border-b border-[#f0e8e0]">
+    <div className="sticky top-16 z-10 px-10 pt-4 pb-2 bg-white border-b border-[#f0e8e0]">
 
       <div className="flex items-center justify-between pb-3">
 

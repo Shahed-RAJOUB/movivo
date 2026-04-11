@@ -6,7 +6,7 @@ export default function Topbar() {
 
   return (
     <div
-      className="w-full sticky flex items-center justify-between px-8 py-4"
+      className="w-full sticky top-0 z-10 flex items-center justify-between px-8 py-4"
       style={{
         background: theme.colors.background,
         borderBottom: "1px solid #eee",

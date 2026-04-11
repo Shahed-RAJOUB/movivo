@@ -15,7 +15,7 @@ export default function PhysioSidebar({ onNavigate, onLogout }) {
 
   return (
     <aside
-      className="w-[260px] min-h-screen flex-shrink-0 flex flex-col py-9"
+      className="w-[260px] sticky top-0 h-screen shrink-0 flex flex-col py-9"
       style={{ background: "linear-gradient(180deg, #E8594F 0%, #e07060 100%)" }}
     >
       <div className="px-7 mb-12">
