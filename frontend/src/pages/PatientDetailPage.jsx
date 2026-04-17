@@ -22,8 +22,11 @@ export default function PatientDetailPage() {
   const [status, setStatus] = useState("");
   const [lastSavedData, setLastSavedData] = useState(null);
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  
+  const [activeTab, setActiveTab] = useState("overview"); // "overview" or "history"
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   // ─── FETCH ───
   useEffect(() => {
@@ -45,6 +48,24 @@ export default function PatientDetailPage() {
 
     fetchPatient();
   }, [id]);
+
+  // ─── FETCH HISTORY ───
+  useEffect(() => {
+    if (activeTab === "history" && patient) {
+        setLoadingHistory(true);
+        const fullName = `${patient.surname} ${patient.firstName}`;
+        fetch(`http://localhost:4000/api/history/${encodeURIComponent(fullName)}`)
+            .then(res => res.json())
+            .then(data => {
+                setHistory(data);
+                setLoadingHistory(false);
+            })
+            .catch(err => {
+                console.error("Error fetching history:", err);
+                setLoadingHistory(false);
+            });
+    }
+  }, [activeTab, patient]);
 
   // ─── AGE ───
   const calculateAge = (birthDate) => {
@@ -205,13 +226,20 @@ export default function PatientDetailPage() {
       {/* ─── NAVIGATION ─── */}
       <div className="flex gap-6 text-[13px] mt-2">
 
-        <div className="relative pb-3 font-medium text-[#3d3129]">
+        <div 
+          onClick={() => setActiveTab("overview")}
+          className={`relative pb-3 cursor-pointer transition-colors ${activeTab === "overview" ? "font-medium text-[#3d3129]" : "text-[#b0a49a] hover:text-[#3d3129]"}`}
+        >
           Übersicht
-          <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#E8594F]" />
+          {activeTab === "overview" && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#E8594F]" />}
         </div>
 
-        <div className="pb-3 text-[#b0a49a] hover:text-[#3d3129] cursor-pointer">
+        <div 
+          onClick={() => setActiveTab("history")}
+          className={`relative pb-3 cursor-pointer transition-colors ${activeTab === "history" ? "font-medium text-[#3d3129]" : "text-[#b0a49a] hover:text-[#3d3129]"}`}
+        >
           Verlauf
+          {activeTab === "history" && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#E8594F]" />}
         </div>
 
       </div>
@@ -221,185 +249,236 @@ export default function PatientDetailPage() {
     {/* ─── CONTENT ─── */}
     <div className="px-10 py-8">
 
-      <div className="grid grid-cols-[1fr_360px] gap-10">
+      {activeTab === "overview" ? (
+        <div className="grid grid-cols-[1fr_360px] gap-10">
 
-        {/* ─── LEFT: STAMMDATEN ─── */}
-        <Card title="Stammdaten">
-
-          <div className="text-xs text-[#b0a49a] mb-4 uppercase tracking-wide">
-            Basisdaten
-          </div>
-
-          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
-
-            <div className="text-[#b0a49a]">Vorname</div>
-            <InlineEdit field="firstName" value={name} onChange={setName} />
-
-            <div className="text-[#b0a49a]">Nachname</div>
-            <InlineEdit field="surname" value={surname} onChange={setSurname} />
-
-            <div className="text-[#b0a49a]">Geburtsdatum</div>
-            <InlineEdit
-              field="birthDate"
-              value={birthDate}
-              onChange={setBirthDate}
-              type="date"
-            />
-
-            <div className="text-[#b0a49a]">Alter</div>
-            <div className="text-[#3d3129]">
-              {calculateAge(birthDate)} Jahre
+          {/* ─── LEFT: STAMMDATEN ─── */}
+          <Card title="Stammdaten">
+            {/* ... Stammdaten content ... */}
+            <div className="text-xs text-[#b0a49a] mb-4 uppercase tracking-wide">
+              Basisdaten
             </div>
 
-            <div className="text-[#b0a49a]">Geschlecht</div>
-            <InlineEdit
-              field="gender"
-              value={
-                gender === "male"
-                  ? "Männlich"
-                  : gender === "female"
-                  ? "Weiblich"
-                  : gender === "other"
-                  ? "Divers"
-                  : ""
-              }
-              onChange={(val) => {
-                const map = {
-                  "Männlich": "male",
-                  "Weiblich": "female",
-                  "Divers": "other",
-                };
-                setGender(map[val] || val);
-              }}
-            />
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
 
-          </div>
+              <div className="text-[#b0a49a]">Vorname</div>
+              <InlineEdit field="firstName" value={name} onChange={setName} />
 
-          <div className="border-t border-[#f0e8e0] my-6" />
+              <div className="text-[#b0a49a]">Nachname</div>
+              <InlineEdit field="surname" value={surname} onChange={setSurname} />
 
-          <div className="text-xs text-[#b0a49a] mb-4 uppercase tracking-wide">
-            System
-          </div>
+              <div className="text-[#b0a49a]">Geburtsdatum</div>
+              <InlineEdit
+                field="birthDate"
+                value={birthDate}
+                onChange={setBirthDate}
+                type="date"
+              />
 
-          <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+              <div className="text-[#b0a49a]">Alter</div>
+              <div className="text-[#3d3129]">
+                {calculateAge(birthDate)} Jahre
+              </div>
 
-            <div className="text-[#b0a49a]">Therapeut</div>
-            <div className="text-[#3d3129]">
-              {patient.createdByName || "-"}
-            </div>
-
-            <div className="text-[#b0a49a]">Erstellt am</div>
-            <div className="text-[#3d3129]">
-              {patient.createdAt?.toDate
-                ? patient.createdAt.toDate().toLocaleDateString()
-                : "-"}
-            </div>
-
-          </div>
-
-        </Card>
-
-        {/* ─── RIGHT: MOCK DASHBOARD ─── */}
-        <div className="flex flex-col gap-6">
-
-          {/* SCORE */}
-          <Card title="Aktueller Status">
-
-            <div className="text-3xl font-bold text-[#3d3129]">
-              16 / 21
-            </div>
-
-            <div className="text-sm text-[#b0a49a] mt-1">
-              letzter FMS Score
-            </div>
-
-            <div className="mt-4 h-2 bg-[#f5f0ea] rounded-full overflow-hidden">
-              <div
-                className="h-full"
-                style={{
-                  width: "76%",
-                  background: theme.colors.primaryGradient,
+              <div className="text-[#b0a49a]">Geschlecht</div>
+              <InlineEdit
+                field="gender"
+                value={
+                  gender === "male"
+                    ? "Männlich"
+                    : gender === "female"
+                    ? "Weiblich"
+                    : gender === "other"
+                    ? "Divers"
+                    : ""
+                }
+                onChange={(val) => {
+                  const map = {
+                    "Männlich": "male",
+                    "Weiblich": "female",
+                    "Divers": "other",
+                  };
+                  setGender(map[val] || val);
                 }}
               />
+
             </div>
 
-            <div className="text-xs text-green-500 mt-2">
-              +2 Verbesserung
+            <div className="border-t border-[#f0e8e0] my-6" />
+
+            <div className="text-xs text-[#b0a49a] mb-4 uppercase tracking-wide">
+              System
             </div>
 
-          </Card>
+            <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
 
-          {/* SESSIONS */}
-          <Card title="Behandlung">
-
-            <div className="flex justify-between items-center">
-
-              <div>
-                <div className="text-2xl font-bold text-[#3d3129]">
-                  12
-                </div>
-                <div className="text-sm text-[#b0a49a]">
-                  Sessions gesamt
-                </div>
+              <div className="text-[#b0a49a]">Therapeut</div>
+              <div className="text-[#3d3129]">
+                {patient.createdByName || "-"}
               </div>
 
-              <div className="text-right">
-                <div className="text-sm font-medium text-[#3d3129]">
-                  2 / Woche
-                </div>
-                <div className="text-xs text-[#b0a49a]">
-                  Frequenz
-                </div>
+              <div className="text-[#b0a49a]">Erstellt am</div>
+              <div className="text-[#3d3129]">
+                {patient.createdAt?.toDate
+                  ? patient.createdAt.toDate().toLocaleDateString()
+                  : "-"}
               </div>
 
             </div>
 
           </Card>
 
-          {/* NEXT SESSION */}
-          <Card title="Nächster Termin">
+          {/* ─── RIGHT: MOCK DASHBOARD ─── */}
+          <div className="flex flex-col gap-6">
 
-            <div className="text-lg font-semibold text-[#3d3129]">
-              12. April 2026
-            </div>
+            {/* SCORE */}
+            <Card title="Aktueller Status">
 
-            <div className="text-sm text-[#b0a49a] mt-1">
-              09:30 Uhr • Praxis
-            </div>
-
-            <div className="mt-3 text-xs text-[#b0a49a]">
-              geplant vor 3 Tagen
-            </div>
-
-          </Card>
-
-          {/* SCREENINGS */}
-          <Card title="Letzte Screenings">
-
-            <div className="flex flex-col gap-3 text-sm">
-
-              <div className="flex justify-between">
-                <span>20.03.2026</span>
-                <span className="font-medium">16 / 21</span>
+              <div className="text-3xl font-bold text-[#3d3129]">
+                16 / 21
               </div>
 
-              <div className="flex justify-between">
-                <span>12.03.2026</span>
-                <span className="font-medium">14 / 21</span>
+              <div className="text-sm text-[#b0a49a] mt-1">
+                letzter FMS Score
               </div>
 
-              <div className="flex justify-between">
-                <span>01.03.2026</span>
-                <span className="font-medium">13 / 21</span>
+              <div className="mt-4 h-2 bg-[#f5f0ea] rounded-full overflow-hidden">
+                <div
+                  className="h-full"
+                  style={{
+                    width: "76%",
+                    background: theme.colors.primaryGradient,
+                  }}
+                />
               </div>
 
-            </div>
+              <div className="text-xs text-green-500 mt-2">
+                +2 Verbesserung
+              </div>
 
-          </Card>
+            </Card>
+
+            {/* SESSIONS */}
+            <Card title="Behandlung">
+
+              <div className="flex justify-between items-center">
+
+                <div>
+                  <div className="text-2xl font-bold text-[#3d3129]">
+                    12
+                  </div>
+                  <div className="text-sm text-[#b0a49a]">
+                    Sessions gesamt
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-sm font-medium text-[#3d3129]">
+                    2 / Woche
+                  </div>
+                  <div className="text-xs text-[#b0a49a]">
+                    Frequenz
+                  </div>
+                </div>
+
+              </div>
+
+            </Card>
+
+            {/* NEXT SESSION */}
+            <Card title="Nächster Termin">
+
+              <div className="text-lg font-semibold text-[#3d3129]">
+                12. April 2026
+              </div>
+
+              <div className="text-sm text-[#b0a49a] mt-1">
+                09:30 Uhr • Praxis
+              </div>
+
+              <div className="mt-3 text-xs text-[#b0a49a]">
+                geplant vor 3 Tagen
+              </div>
+
+            </Card>
+
+            {/* SCREENINGS */}
+            <Card title="Letzte Screenings">
+
+              <div className="flex flex-col gap-3 text-sm">
+
+                <div className="flex justify-between">
+                  <span>20.03.2026</span>
+                  <span className="font-medium">16 / 21</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>12.03.2026</span>
+                  <span className="font-medium">14 / 21</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>01.03.2026</span>
+                  <span className="font-medium">13 / 21</span>
+                </div>
+
+              </div>
+
+            </Card>
+
+          </div>
 
         </div>
-
-      </div>
+      ) : (
+        /* ─── HISTORY VIEW (VERLAUF) ─── */
+        <div className="flex flex-col gap-6">
+          <Card title="Assessment Verlauf (FMS Squats)">
+            {loadingHistory ? (
+                <div className="py-10 text-center text-[#b0a49a]">Lade Verlauf...</div>
+            ) : history.length === 0 ? (
+                <div className="py-10 text-center text-[#b0a49a]">Keine Aufnahmen gefunden.</div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {history.map((session, index) => (
+                        <div key={session.session_id || index} className="p-4 border border-[#f0e8e0] rounded-xl bg-[#fafafa]">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <div className="text-sm font-semibold text-[#3d3129]">
+                                        {new Date(session._time).toLocaleDateString("de-DE", {
+                                            day: "2-digit",
+                                            month: "2-digit",
+                                            year: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit"
+                                        })}
+                                    </div>
+                                    <div className="text-xs text-[#b0a49a]">Session: {session.session_id?.substring(0, 8)}</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-sm font-bold text-red-500">{session.squat_count} Squats</div>
+                                    <div className="text-xs text-[#b0a49a]">Max: {Math.round(session.max_angle)}°</div>
+                                </div>
+                            </div>
+                            
+                            {session.video_url && (
+                                <div className="aspect-video bg-black rounded-lg overflow-hidden relative group">
+                                    {/* Link to the FMS-Assessment Python backend serving the video */}
+                                    <video 
+                                        controls 
+                                        className="w-full h-full"
+                                        src={`http://localhost:8000/videos/${session.video_url}`}
+                                    >
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+          </Card>
+        </div>
+      )}
 
     </div>
 
