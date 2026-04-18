@@ -1,19 +1,73 @@
-import { useState } from "react";
 import PhysioSidebar from "../components/shared/PhysioSidebar";
+import PhysioHomePage from "../components/physio/PhysioHomePage";
+import Topbar from "../components/layout/Topbar"
+import PatientsPage from "./PatientsPage";
+import NewPatientPage from "./NewPatientPage";
+import PatientDetailPage from "./PatientDetailPage";
+import EditPatientPage from "./EditPatientPage";
+
+import {
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
 
 export default function PhysioDashboard({ onLogout }) {
-  const [activePage, setActivePage] = useState("home");
+  const navigate = useNavigate();
 
   return (
     <div className="flex min-h-screen">
+
+      {/* ─── SIDEBAR ─── */}
       <PhysioSidebar
-        activePage={activePage}
-        setActivePage={setActivePage}
+        onNavigate={navigate}
         onLogout={onLogout}
       />
-      <main className="flex-1 bg-gray-50 p-10">
-        <h1 className="text-2xl font-bold text-gray-700 capitalize">{activePage}</h1>
-      </main>
+
+      {/* ─── RIGHT SIDE ─── */}
+      <div className="flex-1 flex flex-col">
+
+        {/* ─── TOPBAR ─── */}
+        <Topbar />
+
+        {/* ─── MAIN CONTENT ─── */}
+        <main className="flex-1 bg-gray-50">
+          <Routes>
+
+            {/* Default Redirect */}
+            <Route path="/" element={<Navigate to="/home" />} />
+
+            {/* Home */}
+            <Route
+              path="/home"
+              element={
+                <PhysioHomePage
+                  onNavigate={navigate}
+                  onStartScreening={() => navigate("/screenings")}
+                />
+              }
+            />
+
+            {/* Patients */}
+            <Route path="/patients" element={<PatientsPage />} />
+            <Route path="/new-patient" element={<NewPatientPage />} />
+            <Route path="/patients/:id" element={<PatientDetailPage />} />
+            <Route path="/patients/:id/edit" element={<EditPatientPage />} />
+
+            {/* Screenings */}
+            <Route path="/screenings" element={<div>Screenings Seite</div>} />
+
+            {/* Future Routes */}
+            <Route path="/training" element={<div>Training Seite</div>} />
+            <Route path="/treatments" element={<div>Treatments Seite</div>} />
+            <Route path="/reports" element={<div>Reports Seite</div>} />
+            <Route path="/settings" element={<div>Settings Seite</div>} />
+
+          </Routes>
+        </main>
+
+      </div>
     </div>
   );
 }

@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+/* ─── GLOBAL RESET ─── */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+  background: #f9f7f5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.brand-font {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+}
+
+/* ─── HEADINGS FONT ─── */
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif;
+}
+
+/* ─── ANIMATIONS ─── */
 @keyframes fadeIn {
   from {
     opacity: 0;
