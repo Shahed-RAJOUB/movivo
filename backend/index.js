@@ -31,10 +31,11 @@ app.get("/api/history/:patientName", async (req, res) => {
       |> filter(fn: (r) => r["_measurement"] == "squat_session")
       |> filter(fn: (r) => r["patient_name"] == "${patientName}")
       |> filter(fn: (r) => r["_field"] == "squat_count" or r["_field"] == "max_angle" or r["_field"] == "video_url")
+      |> group(columns: ["session_id", "_field"])
+      |> last()
       |> map(fn: (r) => ({ r with _value: string(v: r["_value"]) }))
       |> group(columns: ["session_id"])
-      |> last()
-      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> pivot(rowKey:["session_id", "_time"], columnKey: ["_field"], valueColumn: "_value")
       |> group()
       |> sort(columns: ["_time"], desc: true)
     `;
@@ -52,7 +53,13 @@ app.get("/api/history/:patientName", async (req, res) => {
             });
         });
 
-        res.json(sessions);
+        // Add mock FMS score to each session for the frontend
+        const enrichedSessions = sessions.map(session => ({
+            ...session,
+            fms_score: Math.floor(Math.random() * 3) + 1 // Mock score 1-3
+        }));
+
+        res.json(enrichedSessions);
     } catch (err) {
         console.error("History query failed:", err);
         res.status(500).json({ error: "Failed to fetch patient history" });

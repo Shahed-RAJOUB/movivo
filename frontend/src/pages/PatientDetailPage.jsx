@@ -4,6 +4,8 @@ import { db } from "../firebase";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { theme } from "../theme/theme";
 import Card from "../components/shared/Card";
+import PatientHistory from "../components/patient/PatientHistory";
+
 
 export default function PatientDetailPage() {
   const { id } = useParams();
@@ -25,8 +27,7 @@ export default function PatientDetailPage() {
   const [deleting, setDeleting] = useState(false);
   
   const [activeTab, setActiveTab] = useState("overview"); // "overview" or "history"
-  const [history, setHistory] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+
 
   // ─── FETCH ───
   useEffect(() => {
@@ -49,23 +50,7 @@ export default function PatientDetailPage() {
     fetchPatient();
   }, [id]);
 
-  // ─── FETCH HISTORY ───
-  useEffect(() => {
-    if (activeTab === "history" && patient) {
-        setLoadingHistory(true);
-        const fullName = `${patient.surname} ${patient.firstName}`;
-        fetch(`http://localhost:4000/api/history/${encodeURIComponent(fullName)}`)
-            .then(res => res.json())
-            .then(data => {
-                setHistory(data);
-                setLoadingHistory(false);
-            })
-            .catch(err => {
-                console.error("Error fetching history:", err);
-                setLoadingHistory(false);
-            });
-    }
-  }, [activeTab, patient]);
+
 
   // ─── AGE ───
   const calculateAge = (birthDate) => {
@@ -430,55 +415,9 @@ export default function PatientDetailPage() {
 
         </div>
       ) : (
-        /* ─── HISTORY VIEW (VERLAUF) ─── */
-        <div className="flex flex-col gap-6">
-          <Card title="Assessment Verlauf (FMS Squats)">
-            {loadingHistory ? (
-                <div className="py-10 text-center text-[#b0a49a]">Lade Verlauf...</div>
-            ) : history.length === 0 ? (
-                <div className="py-10 text-center text-[#b0a49a]">Keine Aufnahmen gefunden.</div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {history.map((session, index) => (
-                        <div key={session.session_id || index} className="p-4 border border-[#f0e8e0] rounded-xl bg-[#fafafa]">
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <div className="text-sm font-semibold text-[#3d3129]">
-                                        {new Date(session._time).toLocaleDateString("de-DE", {
-                                            day: "2-digit",
-                                            month: "2-digit",
-                                            year: "numeric",
-                                            hour: "2-digit",
-                                            minute: "2-digit"
-                                        })}
-                                    </div>
-                                    <div className="text-xs text-[#b0a49a]">Session: {session.session_id?.substring(0, 8)}</div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-sm font-bold text-red-500">{session.squat_count} Squats</div>
-                                    <div className="text-xs text-[#b0a49a]">Max: {Math.round(session.max_angle)}°</div>
-                                </div>
-                            </div>
-                            
-                            {session.video_url && (
-                                <div className="aspect-video bg-black rounded-lg overflow-hidden relative group">
-                                    {/* Link to the FMS-Assessment Python backend serving the video */}
-                                    <video 
-                                        controls 
-                                        className="w-full h-full"
-                                        src={`http://localhost:8000/videos/${session.video_url}`}
-                                    >
-                                        Your browser does not support the video tag.
-                                    </video>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            )}
-          </Card>
-        </div>
+        <PatientHistory patient={patient} />
       )}
+
 
     </div>
 
